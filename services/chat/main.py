@@ -5,7 +5,8 @@ from fastapi import FastAPI
 import kafka_handler
 from dataclasses import dataclass
 from repository import Repository
-from services.chat.domain import Room
+from domain import Room
+import socketio
 
 app = FastAPI(root_path="/api/chat")
 repository = Repository()
@@ -17,9 +18,17 @@ async def consume_handler(msg):
 
 asyncio.create_task(kafka_handler.consume("main_topic", consume_handler))
 
+
+sio = socketio.AsyncServer()
+
+@sio.on('echo')
+def echo(sid, data):
+    sio.emit('echo', {'data': 'echo'})
+
 @app.get("/")
 async def read_root():
     return {"Hello": "Chat"}
+
 
 @app.get("/rooms")
 async def read_item():

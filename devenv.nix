@@ -12,9 +12,11 @@
       ps.fastapi
       ps.uvicorn
       ps.aiokafka
+      ps.python-socketio
     ]))
     pkgs.python311Packages.pip
     pkgs.poetry
+    
   ];
 
   # https://devenv.sh/scripts/
