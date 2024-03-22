@@ -3,8 +3,15 @@ from fastapi import FastAPI
 import kafka_handler
 from domain import Room, RoomStatus, Video
 from repository import Repository
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(root_path='/api/rooms')
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 repository = Repository()
 
 
@@ -135,4 +142,4 @@ async def read_progress(room_id: str):
 
 @app.get('/rooms')
 async def read_rooms():
-    return {'rooms': repository.rooms}
+    return {"rooms": list(repository.rooms.values())}
