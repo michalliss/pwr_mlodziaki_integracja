@@ -2,13 +2,15 @@ from typing import Union
 
 from fastapi import FastAPI
 
-app = FastAPI(root_path="/api/users")
+from repository import Repository
+from domain import User
 
+app = FastAPI(root_path="/api/users")
+repository = Repository()
 
 @app.get("/")
 def read_root():
     return {"Hello": "Users"}
-
 
 @app.get("/items/{item_id}")
 def read_item(item_id: int, q: Union[str, None] = None):
