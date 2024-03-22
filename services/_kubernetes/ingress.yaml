@@ -4,8 +4,7 @@ metadata:
   name: ingress-api
 spec:
   rules:
-  - host: minikube.pl
-    http:
+  - http:
       paths:
       - path: /api/videos
         pathType: ImplementationSpecific
