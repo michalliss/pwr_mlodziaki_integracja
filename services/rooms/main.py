@@ -1,7 +1,7 @@
 import uuid
 from fastapi import FastAPI
 import kafka_handler
-from domain import Room, RoomStatus
+from domain import Room, RoomStatus, Video
 from repository import Repository
 
 app = FastAPI(root_path='/api/rooms')
@@ -16,7 +16,7 @@ def read_root():
 @app.post('/create_room/{room_name}')
 async def create_room(room_name: str):
     room_id = str(uuid.uuid4())
-    repository.add_room(Room(id=room_id, name=room_name))
+    repository.add_room(Room(id=room_id, name=room_name, users=[], status=RoomStatus.NO_VIDEO, video=None))
     await kafka_handler.send_one('main_topic', ('room_created', room_id))
     return {'room': repository.get_room(room_id)}
 
@@ -75,14 +75,20 @@ async def pause(room_id: str):
 async def set_video(room_id: str, video_url: str):
     # TODO no video metadata is set
     room = repository.get_room(room_id)
-    room.video.url = video_url
-    await kafka_handler.send_one('main_topic', ('vide_set', room_id, video_url))
+
+    room.video = Video(url=video_url, length=0, progress=0)
+
+    await kafka_handler.send_one('main_topic', ('video_set', room_id, video_url))
     return {'room': room}
 
 
 @app.get('/room/{room_id}/video')
 async def read_video(room_id: str):
     room = repository.get_room(room_id)
+
+    if room.video is None:
+        return {'video': None}
+
     return {'video': room.video.url}
 
 
@@ -95,6 +101,10 @@ async def read_status(room_id: str):
 @app.get('/room/{room_id}/progress')
 async def read_progress(room_id: str):
     room = repository.get_room(room_id)
+
+    if room.video is None:
+        return {'progress': None}
+
     return {'progress': room.video.progress}
 
 

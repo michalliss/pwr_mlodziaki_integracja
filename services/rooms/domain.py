@@ -26,4 +26,4 @@ class Room:
     name: str
     users: List[User]
     status: RoomStatus
-    video: Video
+    video: Video | None
