@@ -5,8 +5,8 @@ from typing import List, Union
 from fastapi import FastAPI
 from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
 
-kafka_bootstrap_servers = os.environ.get("KAFKA_SERVER")
-kafka_group_id = os.environ.get("KAFKA_GROUP_ID")
+kafka_bootstrap_servers = os.environ.get('KAFKA_SERVER')
+kafka_group_id = os.environ.get('KAFKA_GROUP_ID')
 
 loop = asyncio.get_event_loop()
 
@@ -14,7 +14,7 @@ def kafka_serializer(value):
     return json.dumps(value).encode()
 
 def encode_json(msg):
-    to_load = msg.value.decode("utf-8")
+    to_load = msg.value.decode('utf-8')
     return json.loads(to_load)
 
 async def send_one(topic: str, msg: List):
@@ -30,7 +30,7 @@ async def send_one(topic: str, msg: List):
             await producer.stop()
 
     except Exception as err:
-        print(f"Some Kafka error: {err}")
+        print(f'Some Kafka error: {err}')
 
 
 
@@ -54,4 +54,4 @@ async def consume(topic: str, on_message: callable):
                 await consumer.stop()
         
         except Exception as err:
-            print(f"Some Kafka error: {err}")
+            print(f'Some Kafka error: {err}')
