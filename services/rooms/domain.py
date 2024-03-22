@@ -24,6 +24,7 @@ class Video:
 class Room:
     id: str
     name: str
+    owner: User
     users: List[User]
     status: RoomStatus
     video: Video | None

@@ -13,10 +13,14 @@ def read_root():
     return {'Hello': 'Rooms'}
 
 
-@app.post('/create_room/{room_name}')
-async def create_room(room_name: str):
+@app.post('/create_room/{room_name}/{owner_name}')
+async def create_room(room_name: str, owner_name: str):
     room_id = str(uuid.uuid4())
-    repository.add_room(Room(id=room_id, name=room_name, users=[], status=RoomStatus.NO_VIDEO, video=None))
+    owner_id = str(uuid.uuid4())
+
+    repository.add_room(
+        Room(id=room_id, name=room_name, owner=(owner_id, owner_name), users=[], status=RoomStatus.NO_VIDEO,
+             video=None))
     await kafka_handler.send_one('main_topic', ('room_created', room_id))
     return {'room': repository.get_room(room_id)}
 
@@ -39,12 +43,14 @@ async def read_room_users(room_id: str):
     return {'users': room.users}
 
 
-@app.post('/room/{room_id}/join/{user_id}')
-async def join_room(room_id: str, user_id: str, user_name: str):
+# TODO: in the future we should probably use id from user service instead of generating one
+@app.post('/room/{room_id}/join/{user_name}')
+async def join_room(room_id: str, user_name: str):
     room = repository.get_room(room_id)
+    user_id = str(uuid.uuid4())
     room.users.append((user_id, user_name))
     await kafka_handler.send_one('main_topic', ('user_joined', room_id, user_id))
-    return {'room': room}
+    return {'user_id': user_id, 'room': room}
 
 
 @app.delete('/room/{room_id}/leave/{user_id}')
@@ -71,10 +77,13 @@ async def pause(room_id: str):
     return {'room': room}
 
 
-@app.post('/room/{room_id}/set_video/{video_url}')
-async def set_video(room_id: str, video_url: str):
+@app.post('/room/{room_id}/set_video/{video_url}/{user_id}')
+async def set_video(room_id: str, video_url: str, user_id: str):
     # TODO no video metadata is set
     room = repository.get_room(room_id)
+
+    if room.owner[0] != user_id:
+        return {'error': 'Only owner can set video'}
 
     room.video = Video(url=video_url, length=0, progress=0)
 
@@ -96,6 +105,22 @@ async def read_video(room_id: str):
 async def read_status(room_id: str):
     room = repository.get_room(room_id)
     return {'status': room.status}
+
+
+@app.post('/room/{room_id}/set_progress/{progress}')
+async def set_progress(room_id: str, progress: int, user_id: str):
+    room = repository.get_room(room_id)
+
+    if room.owner[0] != user_id:
+        return {'error': 'Only owner can set progress'}
+
+    if room.video is None:
+        return {'error': 'No video set'}
+
+    room.video.progress = progress
+
+    await kafka_handler.send_one('main_topic', ('video_progress_set', room_id, progress))
+    return {'room': room}
 
 
 @app.get('/room/{room_id}/progress')
