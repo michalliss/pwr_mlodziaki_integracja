@@ -7,14 +7,14 @@
   # https://devenv.sh/packages/
   packages = [
     pkgs.git
-    (pkgs.python3.withPackages (ps: [
+    (pkgs.python312.withPackages (ps: [
       ps.black
       ps.fastapi
       ps.uvicorn
       ps.aiokafka
       ps.python-socketio
     ]))
-    pkgs.python311Packages.pip
+    pkgs.python312Packages.pip
     pkgs.poetry
     
   ];

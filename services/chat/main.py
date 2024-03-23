@@ -1,14 +1,23 @@
 import asyncio
 import json
 from typing import Dict, List
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket
 import kafka_handler
 from dataclasses import dataclass
 from repository import Repository
 from domain import Room
-import socketio
+from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI(root_path='/api/chat')
+app = FastAPI(root_path="/api/chat")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
 repository = Repository()
 
 
@@ -21,19 +30,19 @@ async def consume_handler(msg):
 asyncio.create_task(kafka_handler.consume('main_topic', consume_handler))
 
 
-sio = socketio.AsyncServer()
-
-
-@sio.on('echo')
-def echo(sid, data):
-    sio.emit('echo', {'data': 'echo'})
-
-
-@app.get('/')
+@app.get("/")
 async def read_root():
     return {'Hello': 'Chat'}
 
 
 @app.get("/rooms")
 async def read_item():
-    return {'rooms': repository.get_rooms()}
+    return {"rooms": repository.get_rooms()}
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    while True:
+        data = await websocket.receive_text()
+        await websocket.send_text(f"Message text was: {data}")
+    
