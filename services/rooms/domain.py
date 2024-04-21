@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum
 from typing import List, Tuple
+import uuid
 
 type UserId = str
 type UserName = str
@@ -22,7 +23,7 @@ class Video:
 
 @dataclass
 class Room:
-    id: str
+    id: uuid
     name: str
     owner: User
     users: List[User]

@@ -18,11 +18,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-repository = Repository()
+
 
 postgress_handler.init_db()
 postgress_handler.add_demo_data()
 
+repository = Repository(postgress_handler)
 
 @app.post('/create_room/{room_name}/{owner_name}')
 async def create_room(room_name: str, owner_name: str):
@@ -143,7 +144,14 @@ async def read_progress(room_id: str):
 
 @app.get('/rooms')
 async def read_rooms():
-    return {"rooms": list(repository.rooms.values())}
+    return {"rooms": repository.get_rooms()}
+
+@app.get("/testdb")
+async def read_item():
+    with postgress_handler.connect_to_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""SELECT * FROM rooms""")
+            return {'test': cur.fetchall()}
 
 
 @app.websocket("/ws")

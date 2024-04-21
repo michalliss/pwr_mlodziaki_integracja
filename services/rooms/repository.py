@@ -5,36 +5,29 @@ from domain import Room, RoomStatus, User, Video
 
 
 class Repository:
-    rooms: Dict[str, Room]
-    
-    def __init__(self):
-        self.rooms = {}
-        animal_homes = [('Bear', 'Den'), ('Devin', 'Mancave'), ('Bird', 'Nest'), ('Dog', 'Kennel'), ('Horse', 'Stable'), ('Spider', 'Web')]
-        animal_names = ['Lion', 'Tiger', 'Elephant', 'Giraffe', 'Monkey', 'Zebra']
-        devin: User = ("1337", "Devin")  # Hardcoded user Devin
-        for i, (animal, home) in enumerate(animal_homes):
-            room_id = str(uuid.uuid4())
-            owner_id = str(uuid.uuid4())
-            owner: User = (owner_id, animal)
-            if i == 1:  # Set the owner of the second room to Devin
-                owner = devin
-            room = Room(id=room_id, name=f'{animal}\'s {home}', owner=owner, users=[], status=RoomStatus.NO_VIDEO, video=Video(url='', length=0, progress=0))
-            if i != 0:  # Skip the first room to have at least one room with no users
-                selected_animals = random.sample(animal_names, random.randint(1, len(animal_names)))  # Randomly select a subset of animal names
-                for animal_name in selected_animals:
-                    user_id = str(uuid.uuid4())
-                    user: User = (user_id, animal_name)
-                    room.users.append(user)
-            self.rooms[room_id] = room
+    def __init__(self, postgres_handler):
+        self.postgres_handler = postgres_handler
 
     def get_rooms(self):
-        return self.rooms
+        with self.postgres_handler.connect_to_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""SELECT * FROM rooms""")
+                return cur.fetchall()
 
     def add_room(self, room: Room):
-        self.rooms[room.id] = room
+        with self.postgres_handler.connect_to_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute("INSERT INTO rooms(id, name, owner_id, status, video_id) VALUES (%s, %s, %s, 'NO_VIDEO', null)", (room.id, room.name, room.owner, room.status, room.video_id))
+                return cur.fetchone()
 
     def get_room(self, room_id: str):
-        return self.rooms.get(room_id)
+        with self.postgres_handler.connect_to_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""SELECT * FROM rooms WHERE id=%s""", (room_id,))
+                return cur.fetchone()
 
     def delete_room(self, room_id):
+        with self.postgres_handler.connect_to_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""DELETE FROM rooms WHERE id=%s""", (room_id,))
         del self.rooms[room_id]
