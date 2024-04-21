@@ -28,6 +28,8 @@ RUN poetry install --without dev --no-root && rm -rf $POETRY_CACHE_DIR
 # The runtime image, used to just run the code provided its virtual environment
 FROM python:3.12-slim-bullseye as runtime
 
+RUN apt-get update && apt-get install -y libpq-dev
+
 ENV VIRTUAL_ENV=/app/.venv \
     PATH="/app/.venv/bin:$PATH"
 

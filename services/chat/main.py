@@ -3,6 +3,7 @@ import json
 from typing import Dict, List
 from fastapi import FastAPI, WebSocket
 import kafka_handler
+import postgress_handler
 from dataclasses import dataclass
 from repository import Repository
 from domain import Room
@@ -17,6 +18,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+postgress_handler.init_db()
+postgress_handler.add_demo_data()
 
 repository = Repository()
 
@@ -38,6 +41,13 @@ async def read_root():
 @app.get("/rooms")
 async def read_item():
     return {"rooms": repository.get_rooms()}
+
+@app.get("/testdb")
+async def read_item():
+    with postgress_handler.connect_to_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""SELECT * FROM TestTable""")
+            return {'test': cur.fetchall()}
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
