@@ -41,5 +41,5 @@ helm install kong kong/ingress -n kong --create-namespace
 
 kubectl apply -f kong/videos_route.yaml
 kubectl apply -f kong/chat_route.yaml
-kubectl apply -f kong/videos_route.yaml
+kubectl apply -f kong/rooms_route.yaml
 kubectl apply -f kong/users_route.yaml
