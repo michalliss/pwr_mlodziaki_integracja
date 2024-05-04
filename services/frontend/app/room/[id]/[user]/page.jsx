@@ -11,8 +11,6 @@ OpenAPI.BASE = `${backend_url}/api/rooms`
 
 export default function Page({ params }) {
 
-    let ws = null;
-
     const [me, setMe] = useState(params.user)
     const [room, setRoom] = useState(null)
     const [users, setUsers] = useState([])
@@ -36,7 +34,7 @@ export default function Page({ params }) {
         DefaultService.readRoomUsersRoomRoomIdUsersGet(params.id).then((data) => { setUsers(data.users) })
         DefaultService.readRoomOwnerRoomRoomIdOwnerGet(params.id).then((data) => { setOwner(data.owner) })
 
-        ws = new WebSocket(`${backend_ws_url}/api/rooms/ws`);
+        let ws = new WebSocket(`${backend_ws_url}/api/rooms/ws`);
         ws.addEventListener("message", (event) => {
             let rooms = JSON.parse(event.data)
             let myRoom = rooms[params.id]
@@ -45,6 +43,10 @@ export default function Page({ params }) {
                 setServerProgress(myRoom[0])
             }
         });
+
+        return () => {
+            ws.close();
+        }
     }, [])
 
     useEffect(() => {
