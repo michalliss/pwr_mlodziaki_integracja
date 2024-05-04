@@ -13,6 +13,7 @@
       ps.uvicorn
       ps.aiokafka
       ps.python-socketio
+      ps.pytube
     ]))
     pkgs.python312Packages.pip
     pkgs.poetry
